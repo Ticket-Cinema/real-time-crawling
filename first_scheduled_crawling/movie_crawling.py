@@ -10,8 +10,9 @@ from datetime import datetime
 import pymysql
 from db_setting import db
 
-# 페이지 로딩을 기다리는데 사용할 time 모듈 import
 import time
+
+import subprocess
 
 # 브라우저 꺼짐 방지 옵션
 chrome_options = Options()
@@ -155,3 +156,5 @@ conn.close()
 
 # Chrome 종료
 driver.close()
+
+subprocess.run(["python", "actor_crawling.py"])

@@ -94,6 +94,10 @@ for href in href_list:
   time.sleep(0.1)
   
 
+# DB 연결
+conn = pymysql.connect(host=db['host'], port=db['port'], user=db['user'], password=db['password'], db=db['db'], charset=db['charset'])
+curs = conn.cursor(pymysql.cursors.DictCursor)
+
 names = []
 births = []
 nations = []
@@ -106,7 +110,6 @@ for link in links:
   
   # 이름
   name_tag = soup.find(class_='title').find('strong').get_text(strip=True)
-  names.append(name_tag)
   
   # 출생, 국적 한번에 가져오기
   tags = soup.find(class_='spec').find('dl')
@@ -117,9 +120,6 @@ for link in links:
     birth_tag = birth_tag_sibling.find_next_sibling().get_text(strip=True)
   else :
     birth_tag = ""
-  births.append(birth_tag)
-  
-  # 배우 중복 체크 !!(이름, 출생)
   
   # 국적
   nation_tag_sibling = tags.find('dt', text= lambda text: text and '국적' in text)
@@ -127,15 +127,21 @@ for link in links:
     nation_tag = nation_tag_sibling.find_next_sibling().get_text(strip=True)
   else :
     nation_tag = ""
-  nations.append(nation_tag)
   
   print("name : ", name_tag)
   print("birth : ", birth_tag)
   print("nation : ", nation_tag)
   print("================================")
+  
+  # 배우 중복 체크 !!(이름, 출생, 국적)
+  select_actor_sql = f"SELECT person_id FROM person WHERE name = '{name_tag}' and birth = '{birth_tag}' and nation = '{nation_tag}'"
+  curs.execute(select_actor_sql)
+  result = curs.fetchone()
+  if result is None or result['person_id'] is None:
+    names.append(name_tag)
+    births.append(birth_tag)
+    nations.append(nation_tag)
 
-conn = pymysql.connect(host=db['host'], port=db['port'], user=db['user'], password=db['password'], db=db['db'], charset=db['charset'])
-curs = conn.cursor(pymysql.cursors.DictCursor)
 
 for name, birth, nation in zip(names, births, nations):
   sql = "INSERT INTO person (name, birth, nation) VALUES (%s, %s, %s)"

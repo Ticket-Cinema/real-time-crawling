@@ -83,8 +83,6 @@ def upcoming():
     
     soup = BeautifulSoup(html, 'html.parser')
     
-    # 제목, 감독으로 중복체크!!
-    
     # 이미지 가져오기
     img_class = soup.find(class_='thumb-image')
     src = img_class.find('img')['src']
