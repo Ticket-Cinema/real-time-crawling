@@ -12,8 +12,9 @@ from db_setting import db
 
 import schedule
 
-# 페이지 로딩을 기다리는데 사용할 time 모듈 import
 import time
+
+import subprocess
 
 
 def upcoming():
@@ -55,7 +56,7 @@ def upcoming():
       ol_element = h4_element.find_element(By.XPATH, 'following-sibling::ol')
       
       # 7일 후 날짜인지 확인
-      if date == today + timedelta(days=8):
+      if date == today + timedelta(days=7):
         box_elements = ol_element.find_elements(By.CLASS_NAME, 'box-image')
         
         for box_element in box_elements:
@@ -81,6 +82,8 @@ def upcoming():
     html = driver.page_source
     
     soup = BeautifulSoup(html, 'html.parser')
+    
+    # 제목, 감독으로 중복체크!!
     
     # 이미지 가져오기
     img_class = soup.find(class_='thumb-image')
@@ -148,20 +151,21 @@ def upcoming():
   curs = conn.cursor(pymysql.cursors.DictCursor)
 
   for korean_title, english_title, open_date, genre, plot, nation, running_time, poster_store_file_name, age_limit in zip(korean_titles, english_titles, open_dates, genres, plots, nations, running_times, poster_store_file_names, age_limits):
-    sql = "INSERT INTO movie_temp (korean_title, english_title, open_date, genre, plot, nation, running_time, poster_store_file_name, age_limit) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+    sql = "INSERT INTO movie (korean_title, english_title, open_date, genre, plot, nation, running_time, poster_store_file_name, age_limit) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
     val = (korean_title, english_title, open_date, genre, plot, nation, running_time, poster_store_file_name, age_limit)
     curs.execute(sql, val)
     
   conn.commit()
   conn.close()
 
-# Chrome 종료
+  # Chrome 종료
   driver.close()
+  
+  # actor_crawling.py 실행
+  subprocess.run(["python", "actor_crawling.py"])
 
 # 매일 정각에 실행
-# schedule.every().day.at("00:00").do(upcoming)
-schedule.every(10).seconds.do(upcoming)
-
+schedule.every().day.at("00:00").do(upcoming)
 
 while True:
   schedule.run_pending()
